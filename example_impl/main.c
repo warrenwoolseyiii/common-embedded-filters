@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
     // Read the first line of the file, base the number of columns on the number of entries in the first line
     char line[1024];
     fgets(line, 1024, input_file);
+    fprintf(output_file, "%s", line);
     int   num_columns = 0;
     char *token = strtok(line, ",");
     while (token) {
@@ -127,7 +128,7 @@ int main(int argc, char *argv[])
         for (int i = 0; i < num_columns - 1; i++) {
             token = strtok(NULL, ",");
             filter_data_t input = (filter_data_t)atof(token);
-            filter_data_t output = 0;
+            filter_data_t output = input; //0;
 
             // Run the filter
             if (!strcmp(argv[6], "sma")) {
@@ -136,8 +137,12 @@ int main(int argc, char *argv[])
                 iir_high_pass_filter_run((iir_filter_t *)filter + i, input, &output);
             }
 
-            // Write the output to the file
-            fprintf(output_file, "%f,", (float)output);
+            // Write the output to the file, if this is the last column, don't write a comma
+            if (i < num_columns - 2) {
+                fprintf(output_file, "%f,", (float)output);
+            } else {
+                fprintf(output_file, "%f", (float)output);
+            }
         }
 
         // Write a new line

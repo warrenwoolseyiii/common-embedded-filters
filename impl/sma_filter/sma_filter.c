@@ -40,7 +40,7 @@ int sma_filter_run(sma_filter_t *filter, filter_data_t input, filter_data_t *out
     filter->index = (filter->index + 1) % filter->size;
 
     // Calculate the average
-    *output = filter->sum / filter->count;
+    *output = (filter_data_t)(filter->sum / (filter_data_t)filter->count);
 
     return (filter->count == filter->size) ? SMA_FILTER_ERROR_OK : SMA_FILTER_ERROR_INVALID_OUTPUT;
 }

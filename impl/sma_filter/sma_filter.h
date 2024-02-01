@@ -41,7 +41,7 @@ typedef struct
     filter_data_t *data;
     unsigned int   size;
     unsigned int   index;
-    filter_data_t  sum;
+    filter_accum_t sum;
     unsigned int   count;
 } sma_filter_t;
 

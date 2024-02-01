@@ -53,3 +53,5 @@ Mkfile.old
 dkms.conf
 
 .vscode/
+*.DS_Store
+*.filtered
