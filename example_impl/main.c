@@ -22,15 +22,22 @@ filter_coeff_t _iir_b_coeffs[IIR_FILTER_ORDER + 1] = { TO_FIXED_POINT(0.99608835
 #define ARG_OUTPUT_FILE_SHORT "-o"
 #define ARG_FILTER_TYPE_LONG  "--filter-type"
 #define ARG_FILTER_TYPE_SHORT "-f"
+#define ARG_SUB_FILTER_LONG   "--sub-filter"
+#define ARG_SUB_FILTER_SHORT  "-s"
 #define ARG_HELP_LONG         "--help"
 #define ARG_HELP_SHORT        "-h"
 
 void print_help()
 {
-    printf("Usage: filter_example -i <input file> -o <output file> -f <filter type>\n");
+    printf("Usage: filter_example -i <input file> -o <output file> -f <filter type> -s <sub filter type>\n");
     printf("Filter types:\n");
     printf("  sma - Simple Moving Average\n");
     printf("  iir - Infinite Impulse Response\n");
+    printf("Sub filter types:\n");
+    printf("  high - High pass filter\n");
+    printf("  low - Low pass filter\n");
+    printf("  band - Band pass filter\n");
+    printf("  stop - Band stop filter\n");
 }
 
 int main(int argc, char *argv[])
@@ -42,7 +49,7 @@ int main(int argc, char *argv[])
     }
 
     // Check for correct number of arguments
-    if (argc != 7) {
+    if (argc < 7) {
         printf("Incorrect number of arguments\n");
         print_help();
         return -1;
@@ -59,6 +66,9 @@ int main(int argc, char *argv[])
     printf("Input file: %s\n", argv[2]);
     printf("Output file: %s\n", argv[4]);
     printf("Filter type: %s\n", argv[6]);
+    if (argc == 9) {
+        printf("Sub filter type: %s\n", argv[8]);
+    }
 
     /*
       * We assume the following:
@@ -113,22 +123,6 @@ int main(int argc, char *argv[])
                             (filter_accum_t *)malloc(sizeof(filter_accum_t) * IIR_FILTER_ORDER),
                             (filter_accum_t *)malloc(sizeof(filter_accum_t) * IIR_FILTER_ORDER),
                             IIR_FILTER_ORDER);
-
-            // // Print all of the fields of the filter object
-            // printf("Filter order: %u\n", ((iir_filter_t *)filter + i)->filter_order);
-            // printf("Count: %u\n", ((iir_filter_t *)filter + i)->count);
-            // for(int j = 0; j < IIR_FILTER_ORDER + 1; j++) {
-            //     printf("a_coeffs[%d]: %f\n", j, (float)((iir_filter_t *)filter + i)->a_coeffs[j]);
-            // }
-            // for(int j = 0; j < IIR_FILTER_ORDER + 1; j++) {
-            //     printf("b_coeffs[%d]: %f\n", j, (float)((iir_filter_t *)filter + i)->b_coeffs[j]);
-            // }
-            // for(int j = 0; j < IIR_FILTER_ORDER; j++) {
-            //     printf("prev_inputs[%d]: %f\n", j, (float)((iir_filter_t *)filter + i)->prev_inputs[j]);
-            // }
-            // for(int j = 0; j < IIR_FILTER_ORDER; j++) {
-            //     printf("prev_outputs[%d]: %f\n", j, (float)((iir_filter_t *)filter + i)->prev_outputs[j]);
-            // }
         }
     } else {
         printf("Invalid filter type\n");
@@ -155,7 +149,25 @@ int main(int argc, char *argv[])
             if (!strcmp(argv[6], "sma")) {
                 sma_filter_run((sma_filter_t *)filter + i, input, &output);
             } else if (!strcmp(argv[6], "iir")) {
-                iir_high_pass_filter_run((iir_filter_t *)filter + i, input, &output);
+                // Run the sub filter based on the sub filter type, make sure the sub filter type argument is present
+                if (argc != 9) {
+                    printf("Sub filter type not present\n");
+                    print_help();
+                    return -1;
+                }
+                if (!strcmp(argv[8], "high")) {
+                    iir_high_pass_filter_run((iir_filter_t *)filter + i, input, &output);
+                } else if (!strcmp(argv[8], "low")) {
+                    iir_low_pass_filter_run((iir_filter_t *)filter + i, input, &output);
+                } else if (!strcmp(argv[8], "band")) {
+                    iir_band_pass_filter_run((iir_filter_t *)filter + i, input, &output);
+                } else if (!strcmp(argv[8], "stop")) {
+                    iir_band_stop_filter_run((iir_filter_t *)filter + i, input, &output);
+                } else {
+                    printf("Invalid sub filter type\n");
+                    print_help();
+                    return -1;
+                }
             }
 
             // Write the output to the file, if this is the last column, don't write a comma
@@ -188,10 +200,4 @@ int main(int argc, char *argv[])
 
     // Now free the filter object
     free(filter);
-
-    // printf("Fractions: %lu\n", FIXED_POINT_FRACTIONAL_BITS);
-    // printf("Scaling factor: %lu\n", FIXED_POINT_SCALING_FACTOR);
-    // printf("Filter data type size: %lu\n", sizeof(filter_data_t));
-    // printf("Filter coefficient type size: %lu\n", sizeof(filter_coeff_t));
-    // printf("Filter accumulator type size: %lu\n", sizeof(filter_accum_t));
 }
