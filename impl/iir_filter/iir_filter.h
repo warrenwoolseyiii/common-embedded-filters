@@ -41,8 +41,8 @@ typedef struct {
     unsigned int count;
     filter_coeff_t *b_coeffs;
     filter_coeff_t *a_coeffs;
-    filter_data_t *prev_inputs;
-    filter_data_t *prev_outputs;
+    filter_accum_t *prev_inputs;
+    filter_accum_t *prev_outputs;
 } iir_filter_t;
 
 /**
@@ -55,7 +55,7 @@ typedef struct {
  * @param filter_order Order of the filter
  * @return IIR_FILTER_ERROR_OK on success, negative on error
  */
-int iir_filter_init(iir_filter_t *filter, filter_coeff_t *b_coeffs, filter_coeff_t *a_coeffs, filter_data_t *prev_inputs, filter_data_t *prev_outputs, unsigned int filter_order);
+int iir_filter_init(iir_filter_t *filter, filter_coeff_t *b_coeffs, filter_coeff_t *a_coeffs, filter_accum_t *prev_inputs, filter_accum_t *prev_outputs, unsigned int filter_order);
 
 /**
  * @brief Run a high pass iir filter on the input

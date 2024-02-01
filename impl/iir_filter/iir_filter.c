@@ -1,7 +1,7 @@
 #include "iir_filter.h"
 #include <string.h>
 
-int iir_filter_init(iir_filter_t *filter, filter_coeff_t *b_coeffs, filter_coeff_t *a_coeffs, filter_data_t *prev_inputs, filter_data_t *prev_outputs, unsigned int filter_order)
+int iir_filter_init(iir_filter_t *filter, filter_coeff_t *b_coeffs, filter_coeff_t *a_coeffs, filter_accum_t *prev_inputs, filter_accum_t *prev_outputs, unsigned int filter_order)
 {
     if (!filter || !b_coeffs || !a_coeffs || !prev_inputs || !prev_outputs || filter_order == 0) {
         return IIR_FILTER_ERROR_INVALID_PARAM;
@@ -13,8 +13,8 @@ int iir_filter_init(iir_filter_t *filter, filter_coeff_t *b_coeffs, filter_coeff
     filter->prev_outputs = prev_outputs;
     filter->filter_order = filter_order;
     filter->count = 0;
-    memset(filter->prev_inputs, 0, sizeof(filter_data_t) * filter_order);
-    memset(filter->prev_outputs, 0, sizeof(filter_data_t) * filter_order);
+    memset(filter->prev_inputs, 0, sizeof(filter_accum_t) * filter_order);
+    memset(filter->prev_outputs, 0, sizeof(filter_accum_t) * filter_order);
 
     return IIR_FILTER_ERROR_OK;
 }
@@ -25,10 +25,11 @@ int iir_high_pass_filter_run(iir_filter_t *filter, filter_data_t input, filter_d
         return IIR_FILTER_ERROR_INVALID_PARAM;
     }
 
-    filter_accum_t new_output = TO_FIXED_POINT(filter->b_coeffs[0] * (filter_coeff_t)input);
+    filter_accum_t in = (filter_accum_t)input;
+    filter_accum_t new_output = FROM_FIXED_POINT(filter->b_coeffs[0] * in);
     for (int i = 1; i <= filter->filter_order; i++)
     {
-        new_output += TO_FIXED_POINT(filter->b_coeffs[i] * filter->prev_inputs[i - 1]) - TO_FIXED_POINT(filter->a_coeffs[i] * filter->prev_outputs[i - 1]);
+        new_output += FROM_FIXED_POINT(filter->b_coeffs[i] * filter->prev_inputs[i - 1]) - FROM_FIXED_POINT(filter->a_coeffs[i] * filter->prev_outputs[i - 1]);
     }
 
     // Shift the buffer contents
@@ -37,8 +38,8 @@ int iir_high_pass_filter_run(iir_filter_t *filter, filter_data_t input, filter_d
         filter->prev_inputs[i] = filter->prev_inputs[i - 1];
         filter->prev_outputs[i] = filter->prev_outputs[i - 1];
     }
-    filter->prev_inputs[0] = input;
-    filter->prev_outputs[0] = (filter_data_t)new_output;
+    filter->prev_inputs[0] = in;
+    filter->prev_outputs[0] = new_output;
 
     // Assign the calculated output
     *output = (filter_data_t)new_output;

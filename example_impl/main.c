@@ -1,5 +1,6 @@
 #include "../impl/sma_filter/sma_filter.h"
 #include "../impl/iir_filter/iir_filter.h"
+#include "../impl/fixed_point.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -100,14 +101,34 @@ int main(int argc, char *argv[])
 
         // Now intialize the filter
         for (int i = 0; i < num_columns; i++) {
-            sma_filter_init((sma_filter_t *)filter + i, (filter_data_t *)malloc(sizeof(filter_data_t) * SMA_FILTER_SIZE), SMA_FILTER_SIZE);
+            sma_filter_init((sma_filter_t *)filter + i, (filter_data_t *)malloc(sizeof(filter_data_t) * SMA_FILTER_SIZE),
+                            SMA_FILTER_SIZE);
         }
     } else if (!strcmp(argv[6], "iir")) {
         filter = (void *)malloc(sizeof(iir_filter_t) * num_columns);
 
         // Now intialize the filter
         for (int i = 0; i < num_columns; i++) {
-            iir_filter_init((iir_filter_t *)filter + i, _iir_b_coeffs, _iir_a_coeffs, (filter_data_t *)malloc(sizeof(filter_data_t) * IIR_FILTER_ORDER), (filter_data_t *)malloc(sizeof(filter_data_t) * IIR_FILTER_ORDER), IIR_FILTER_ORDER);
+            iir_filter_init((iir_filter_t *)filter + i, _iir_b_coeffs, _iir_a_coeffs,
+                            (filter_accum_t *)malloc(sizeof(filter_accum_t) * IIR_FILTER_ORDER),
+                            (filter_accum_t *)malloc(sizeof(filter_accum_t) * IIR_FILTER_ORDER),
+                            IIR_FILTER_ORDER);
+
+            // // Print all of the fields of the filter object
+            // printf("Filter order: %u\n", ((iir_filter_t *)filter + i)->filter_order);
+            // printf("Count: %u\n", ((iir_filter_t *)filter + i)->count);
+            // for(int j = 0; j < IIR_FILTER_ORDER + 1; j++) {
+            //     printf("a_coeffs[%d]: %f\n", j, (float)((iir_filter_t *)filter + i)->a_coeffs[j]);
+            // }
+            // for(int j = 0; j < IIR_FILTER_ORDER + 1; j++) {
+            //     printf("b_coeffs[%d]: %f\n", j, (float)((iir_filter_t *)filter + i)->b_coeffs[j]);
+            // }
+            // for(int j = 0; j < IIR_FILTER_ORDER; j++) {
+            //     printf("prev_inputs[%d]: %f\n", j, (float)((iir_filter_t *)filter + i)->prev_inputs[j]);
+            // }
+            // for(int j = 0; j < IIR_FILTER_ORDER; j++) {
+            //     printf("prev_outputs[%d]: %f\n", j, (float)((iir_filter_t *)filter + i)->prev_outputs[j]);
+            // }
         }
     } else {
         printf("Invalid filter type\n");
@@ -128,7 +149,7 @@ int main(int argc, char *argv[])
         for (int i = 0; i < num_columns - 1; i++) {
             token = strtok(NULL, ",");
             filter_data_t input = (filter_data_t)atof(token);
-            filter_data_t output = input; //0;
+            filter_data_t output = 0;
 
             // Run the filter
             if (!strcmp(argv[6], "sma")) {
@@ -160,8 +181,6 @@ int main(int argc, char *argv[])
         }
     } else if (!strcmp(argv[6], "iir")) {
         for (int i = 0; i < num_columns; i++) {
-            free(((iir_filter_t *)filter + i)->b_coeffs);
-            free(((iir_filter_t *)filter + i)->a_coeffs);
             free(((iir_filter_t *)filter + i)->prev_inputs);
             free(((iir_filter_t *)filter + i)->prev_outputs);
         }
@@ -169,4 +188,10 @@ int main(int argc, char *argv[])
 
     // Now free the filter object
     free(filter);
+
+    // printf("Fractions: %lu\n", FIXED_POINT_FRACTIONAL_BITS);
+    // printf("Scaling factor: %lu\n", FIXED_POINT_SCALING_FACTOR);
+    // printf("Filter data type size: %lu\n", sizeof(filter_data_t));
+    // printf("Filter coefficient type size: %lu\n", sizeof(filter_coeff_t));
+    // printf("Filter accumulator type size: %lu\n", sizeof(filter_accum_t));
 }
