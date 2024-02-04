@@ -31,14 +31,14 @@ extern "C" {
 #include <stddef.h>
 
 #ifndef ENABLE_FLOATING_POINT_MATH
-#define ENABLE_FLOATING_POINT_MATH 0
+#define ENABLE_FLOATING_POINT_MATH 1
 #endif /* ENABLE_FLOATING_POINT_MATH */
 
 // Define filter data types based on floating point enabled or not
 #if ENABLE_FLOATING_POINT_MATH
-typedef float     filter_coeff_t;
-typedef float     filter_data_t;
-typedef float     filter_accum_t;
+typedef double     filter_coeff_t;
+typedef double     filter_data_t;
+typedef double     filter_accum_t;
 #else
 typedef long   filter_coeff_t;
 typedef int   filter_data_t;

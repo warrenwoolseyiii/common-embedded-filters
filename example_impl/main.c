@@ -1,5 +1,6 @@
 #include "../impl/sma_filter/sma_filter.h"
 #include "../impl/iir_filter/iir_filter.h"
+#include "../impl/iir_filter/iir_config.h"
 #include "../impl/fixed_point.h"
 
 #include <stdio.h>
@@ -8,12 +9,7 @@
 #include <stdlib.h>
 
 // Filter configuration parameters
-#define SMA_FILTER_SIZE  10
-#define IIR_FILTER_ORDER 1
-
-// Filter coefficients for iir high pass filter
-filter_coeff_t _iir_a_coeffs[IIR_FILTER_ORDER + 1] = { TO_FIXED_POINT(1.00000000000000000000f), TO_FIXED_POINT(-0.99217670017750692057f) };
-filter_coeff_t _iir_b_coeffs[IIR_FILTER_ORDER + 1] = { TO_FIXED_POINT(0.99608835008875340478f), TO_FIXED_POINT(-0.99608835008875340478f) };
+#define SMA_FILTER_SIZE 10
 
 // Argument strings
 #define ARG_INPUT_FILE_LONG   "--input-file"
@@ -33,11 +29,12 @@ void print_help()
     printf("Filter types:\n");
     printf("  sma - Simple Moving Average\n");
     printf("  iir - Infinite Impulse Response\n");
+    printf("  iir-biquad - Infinite Impulse Response Biquad\n");
     printf("Sub filter types:\n");
-    printf("  high - High pass filter\n");
-    printf("  low - Low pass filter\n");
-    printf("  band - Band pass filter\n");
-    printf("  stop - Band stop filter\n");
+    printf("  highpass - High pass filter\n");
+    printf("  lowpass - Low pass filter\n");
+    printf("  bandpass - Band pass filter\n");
+    printf("  bandstop - Band stop filter\n");
 }
 
 int main(int argc, char *argv[])
@@ -56,7 +53,7 @@ int main(int argc, char *argv[])
     }
 
     // Check that the filter type is valid
-    if (strcmp(argv[6], "sma") && strcmp(argv[6], "iir")) {
+    if (strcmp(argv[6], "sma") && strcmp(argv[6], "iir") && strcmp(argv[6], "iir-biquad")) {
         printf("Invalid filter type\n");
         print_help();
         return -1;
@@ -124,6 +121,15 @@ int main(int argc, char *argv[])
                             (filter_accum_t *)malloc(sizeof(filter_accum_t) * IIR_FILTER_ORDER),
                             IIR_FILTER_ORDER);
         }
+    } else if (!strcmp(argv[6], "iir-biquad")) {
+        filter = (void *)malloc(sizeof(iir_biquad_filter_t) * num_columns);
+
+        // Now intialize the filter
+        for (int i = 0; i < num_columns; i++) {
+            iir_biquad_filter_init((iir_biquad_filter_t *)filter + i, _iir_sos_coeffs,
+                                   (filter_accum_t *)malloc(sizeof(filter_accum_t) * (IIR_BIQUAD_NUM_TERMS * 2)),
+                                   IIR_BIQUAD_NUM_TERMS);
+        }
     } else {
         printf("Invalid filter type\n");
         print_help();
@@ -131,10 +137,19 @@ int main(int argc, char *argv[])
     }
 
     // Now read the rest of the file and run the filter on each column
+    unsigned int delta_time = 0;
+    unsigned int prev_time = 0;
+    unsigned int line_count = 0;
     while (fgets(line, 1024, input_file)) {
         // Get the time stamp
         token = strtok(line, ",");
         unsigned int time_stamp = atoi(token);
+        if (prev_time == 0) {
+            prev_time = time_stamp;
+        } else {
+            delta_time += time_stamp - prev_time;
+            prev_time = time_stamp;
+        }
 
         // Write the time stamp to the output file
         fprintf(output_file, "%u,", time_stamp);
@@ -149,25 +164,9 @@ int main(int argc, char *argv[])
             if (!strcmp(argv[6], "sma")) {
                 sma_filter_run((sma_filter_t *)filter + i, input, &output);
             } else if (!strcmp(argv[6], "iir")) {
-                // Run the sub filter based on the sub filter type, make sure the sub filter type argument is present
-                if (argc != 9) {
-                    printf("Sub filter type not present\n");
-                    print_help();
-                    return -1;
-                }
-                if (!strcmp(argv[8], "high")) {
-                    iir_high_pass_filter_run((iir_filter_t *)filter + i, input, &output);
-                } else if (!strcmp(argv[8], "low")) {
-                    iir_low_pass_filter_run((iir_filter_t *)filter + i, input, &output);
-                } else if (!strcmp(argv[8], "band")) {
-                    iir_band_pass_filter_run((iir_filter_t *)filter + i, input, &output);
-                } else if (!strcmp(argv[8], "stop")) {
-                    iir_band_stop_filter_run((iir_filter_t *)filter + i, input, &output);
-                } else {
-                    printf("Invalid sub filter type\n");
-                    print_help();
-                    return -1;
-                }
+                iir_filter_run((iir_filter_t *)filter + i, input, &output);
+            } else if (!strcmp(argv[6], "iir-biquad")) {
+                iir_biquad_filter_run((iir_biquad_filter_t *)filter + i, input, &output);
             }
 
             // Write the output to the file, if this is the last column, don't write a comma
@@ -180,11 +179,17 @@ int main(int argc, char *argv[])
 
         // Write a new line
         fprintf(output_file, "\n");
+
+        // Increment the line count
+        line_count++;
     }
 
     // Close the files
     fclose(input_file);
     fclose(output_file);
+
+    // Print the average time delta
+    printf("Average time delta: %f\n", (float)delta_time / (float)line_count);
 
     // Based on the filter size and type, free all of the sub objects
     if (!strcmp(argv[6], "sma")) {
@@ -195,6 +200,10 @@ int main(int argc, char *argv[])
         for (int i = 0; i < num_columns; i++) {
             free(((iir_filter_t *)filter + i)->prev_inputs);
             free(((iir_filter_t *)filter + i)->prev_outputs);
+        }
+    } else if (!strcmp(argv[6], "iir-biquad")) {
+        for (int i = 0; i < num_columns; i++) {
+            free(((iir_biquad_filter_t *)filter + i)->delay_elements);
         }
     }
 

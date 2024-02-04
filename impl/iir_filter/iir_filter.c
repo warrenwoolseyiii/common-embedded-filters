@@ -19,7 +19,7 @@ int iir_filter_init(iir_filter_t *filter, filter_coeff_t *b_coeffs, filter_coeff
     return IIR_FILTER_ERROR_OK;
 }
 
-int iir_high_pass_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *output)
+int iir_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *output)
 {
     if (!filter || !output) {
         return IIR_FILTER_ERROR_INVALID_PARAM;
@@ -53,20 +53,57 @@ int iir_high_pass_filter_run(iir_filter_t *filter, filter_data_t input, filter_d
     return IIR_FILTER_ERROR_OK;
 }
 
-int iir_low_pass_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *output)
+#include "iir_config.h"
+#include <stdio.h>
+int iir_biquad_filter_init(iir_biquad_filter_t *filter, filter_coeff_t (*sos_coeffs)[6], filter_accum_t *delay_elements, unsigned int filter_order)
 {
-    // TODO: Implement low pass filter
-    return IIR_FILTER_ERROR_INVALID_OUTPUT;
+    if (!filter || !sos_coeffs || !delay_elements || filter_order == 0) {
+        return IIR_FILTER_ERROR_INVALID_PARAM;
+    }
+
+    filter->sos_coeffs = sos_coeffs;
+    filter->delay_elements = delay_elements;
+    filter->filter_order = filter_order;
+    filter->count = 0;
+    memset(filter->delay_elements, 0, sizeof(filter_accum_t) * (filter->filter_order * 2));
+
+    return IIR_FILTER_ERROR_OK;
 }
 
-int iir_band_pass_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *output)
+int iir_biquad_filter_run(iir_biquad_filter_t *filter, filter_data_t input, filter_data_t *output)
 {
-    // TODO: Implement band pass filter
-    return IIR_FILTER_ERROR_INVALID_OUTPUT;
-}
+    if (!filter || !output) {
+        return IIR_FILTER_ERROR_INVALID_PARAM;
+    }
 
-int iir_band_stop_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *output)
-{
-    // TODO: Implement band stop filter
-    return IIR_FILTER_ERROR_INVALID_OUTPUT;
+    filter_accum_t in = (filter_accum_t)input;
+    filter_accum_t new_output = in;
+    for (int i = 0; i < filter->filter_order; i += 2)
+    {
+        // This is the filter equation
+        // output = b0 * input + b1 * delay0 + b2 * delay1 - a1 * delay0 - a2 * delay1
+        filter_accum_t w0 = FROM_FIXED_POINT(filter->sos_coeffs[i >> 1][0] * new_output) +
+                            FROM_FIXED_POINT(filter->sos_coeffs[i >> 1][1] * filter->delay_elements[i]) +
+                            FROM_FIXED_POINT(filter->sos_coeffs[i >> 1][2] * filter->delay_elements[i + 1]);
+        filter_accum_t w1 = FROM_FIXED_POINT(filter->sos_coeffs[i >> 2][4] * filter->delay_elements[i]) +
+                            FROM_FIXED_POINT(filter->sos_coeffs[i >> 1][5] * filter->delay_elements[i + 1]);
+
+        // Move the delay terms
+        filter->delay_elements[i + 1] = filter->delay_elements[i];
+        filter->delay_elements[i] = new_output;
+
+        // Set the output
+        new_output = w0 - w1;
+    }
+
+    // Assign the calculated output
+    *output = (filter_data_t)new_output;
+
+    // Increment the state up to the filter order
+    if (filter->count < filter->filter_order) {
+        filter->count++;
+        return IIR_FILTER_ERROR_INVALID_OUTPUT;
+    }
+
+    return IIR_FILTER_ERROR_OK;
 }

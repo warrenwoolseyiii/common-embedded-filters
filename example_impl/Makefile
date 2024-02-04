@@ -6,7 +6,7 @@ CFLAGS = -Wall -g
 TARGET = filter_example
 
 # Object files
-OBJS = sma_filter.o iir_filter.o main.o
+OBJS = sma_filter.o iir_filter.o iir_coefficients.o main.o
 
 # Default target
 $(TARGET): $(OBJS)
@@ -21,6 +21,9 @@ sma_filter.o: ../impl/sma_filter/sma_filter.c ../impl/sma_filter/sma_filter.h
 
 iir_filter.o: ../impl/iir_filter/iir_filter.c ../impl/iir_filter/iir_filter.h
 	$(CC) $(CFLAGS) -c ../impl/iir_filter/iir_filter.c
+
+iir_coefficients.o: ../impl/iir_filter/iir_coefficients.c ../impl/iir_filter/iir_config.h
+	$(CC) $(CFLAGS) -c ../impl/iir_filter/iir_coefficients.c
 
 # Clean target
 clean:

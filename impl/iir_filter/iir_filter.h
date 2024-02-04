@@ -45,6 +45,14 @@ typedef struct {
     filter_accum_t *prev_outputs;
 } iir_filter_t;
 
+// TODO: Add biquad filter support
+typedef struct {
+    unsigned int filter_order;
+    unsigned int count;
+    filter_coeff_t (*sos_coeffs)[6];
+    filter_accum_t *delay_elements;
+} iir_biquad_filter_t;
+
 /**
  * @brief Initialize the filter
  * @param filter Pointer to the filter
@@ -64,34 +72,25 @@ int iir_filter_init(iir_filter_t *filter, filter_coeff_t *b_coeffs, filter_coeff
  * @param output Pointer to the output value
  * @return IIR_FILTER_ERROR_OK on success, negative on error
  */
-int iir_high_pass_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *output);
+int iir_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *output);
 
 /**
- * @brief Run a low pass iir filter on the input
+ * @brief Initialize the biquad filter
+ * @param filter Pointer to the filter
+ * @param sos_coeffs Pointer to the second order section coefficients
+ * @param delay_elements Pointer to the previous inputs
+ * @param filter_order Order of the filter
+*/
+int iir_biquad_filter_init(iir_biquad_filter_t *filter, filter_coeff_t (*sos_coeffs)[6], filter_accum_t *delay_elements, unsigned int filter_order);
+
+/**
+ * @brief Run a biquad filter on the input
  * @param filter Pointer to the filter
  * @param input Input value
  * @param output Pointer to the output value
  * @return IIR_FILTER_ERROR_OK on success, negative on error
  */
-int iir_low_pass_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *output);
-
-/**
- * @brief Run a band pass iir filter on the input
- * @param filter Pointer to the filter
- * @param input Input value
- * @param output Pointer to the output value
- * @return IIR_FILTER_ERROR_OK on success, negative on error
- */
-int iir_band_pass_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *output);
-
-/**
- * @brief Run a band stop iir filter on the input
- * @param filter Pointer to the filter
- * @param input Input value
- * @param output Pointer to the output value
- * @return IIR_FILTER_ERROR_OK on success, negative on error
- */
-int iir_band_stop_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *output);
+int iir_biquad_filter_run(iir_biquad_filter_t *filter, filter_data_t input, filter_data_t *output);
 
 #ifdef __cplusplus
 }
