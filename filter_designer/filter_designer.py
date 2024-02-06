@@ -307,6 +307,7 @@ parser.add_argument('-t', '--attenuition', type=float, default=0.1, help="Option
 parser.add_argument('-e', '--config_file', type=str, default="", help="Optional configuration file to bypass the command line arguments")
 parser.add_argument('-l', '--roll_off', type=float, default=None, help="Optional roll off for the FIR filter")
 parser.add_argument('-fr', '--frequency_range', nargs='+', default=None, help="Optional frequency range for firwin2 filter design algorithm")
+parser.add_argument('-fg', '--frequency_gain', nargs='+', default=None, help="Optional frequency gain for firwin2 filter design algorithm")
 
 # Parse the arguments
 args = parser.parse_args()
@@ -328,6 +329,7 @@ attenuition = args.attenuition
 roll_off = args.roll_off
 config_file = args.config_file
 frequency_range = args.frequency_range
+frequency_gain = args.frequency_gain
 if config_file:
     try:
         with open(config_file, 'r') as f:
@@ -372,6 +374,8 @@ if config_file:
                     roll_off = float(value)
                 elif key == 'frequency_range':
                     frequency_range = list(map(float, value.split(',')))
+                elif key == 'frequency_gain':
+                    frequency_gain = list(map(float, value.split(',')))
                 config_success = True
     except Exception as e:
         print(f"Error reading from file: {e}")
@@ -483,7 +487,10 @@ elif filter_type == 'fir' or filter_type == 'fir-custom':
         for i in range(int(sampling_rate/2) + 1):
             critical_freq.append(i)
             if i in frequency_range and i != 0 and i != sampling_rate / 2:
-                target_gain.append(1)
+                if frequency_gain:
+                    target_gain.append(frequency_gain[frequency_range.index(i)])
+                else:
+                    target_gain.append(1)
             else:
                 target_gain.append(0)
         
