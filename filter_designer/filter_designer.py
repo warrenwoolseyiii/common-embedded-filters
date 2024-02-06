@@ -156,25 +156,25 @@ def plot_fir_filter_response(h):
 def synthesize_filter_input(filter_mode, frequencies, sampling_rate, fname):
     # Generate and filter a test signal, we need a frequency firmly in the stop band and one in the pass band
     if filter_mode == 'lowpass':
-        freq_in_pass_band = np.random.uniform(0, frequencies(0))
-        freq_in_stop_band = np.random.uniform(frequencies(0), sampling_rate / 2)
+        freq_in_pass_band = np.random.uniform(0, frequencies[int(0)])
+        freq_in_stop_band = np.random.uniform(frequencies[0], sampling_rate / 2)
     elif filter_mode == 'highpass':
-        freq_in_pass_band = np.random.uniform(frequencies(0), sampling_rate / 2)
-        freq_in_stop_band = np.random.uniform(0, frequencies(0))
+        freq_in_pass_band = np.random.uniform(frequencies[0], sampling_rate / 2)
+        freq_in_stop_band = np.random.uniform(0, frequencies[0])
     elif filter_mode == 'bandpass':
         # Find the bigger frequency range and put the stop band in the middle
-        if nyquist - frequencies(1) > frequencies(0):
-            freq_in_stop_band = np.random.uniform(frequencies(1), nyquist)
+        if nyquist - frequencies[1] > frequencies[0]:
+            freq_in_stop_band = np.random.uniform(frequencies[1], nyquist)
         else:
-            freq_in_stop_band = np.random.uniform(0, frequencies(0))
-        freq_in_pass_band = np.random.uniform(frequencies(0), frequencies(1))
+            freq_in_stop_band = np.random.uniform(0, frequencies[0])
+        freq_in_pass_band = np.random.uniform(frequencies[0], frequencies[1])
     elif filter_mode == 'bandstop':
         # Find the bigger frequency range and put the pass band in the middle
-        if nyquist - frequencies(1) > frequencies(0):
-            freq_in_pass_band = np.random.uniform(frequencies(1), nyquist)
+        if nyquist - frequencies[1] > frequencies[0]:
+            freq_in_pass_band = np.random.uniform(frequencies[1], nyquist)
         else:
-            freq_in_pass_band = np.random.uniform(0, frequencies(0))
-        freq_in_stop_band = np.random.uniform(frequencies(0), frequencies(1))
+            freq_in_pass_band = np.random.uniform(0, frequencies[0])
+        freq_in_stop_band = np.random.uniform(frequencies[0], frequencies[1])
     elif filter_mode == 'custom':
         # Choose any frequency in the frequency range that is not the 0th or last frequency
         freq_in_pass_band = np.random.choice(frequencies[1:-1])
@@ -469,7 +469,7 @@ elif filter_type == 'fir' or filter_type == 'fir-custom':
     if stop_cutoff:
         critical_freq = [start_cutoff, stop_cutoff]
     else:
-        critical_freq = start_cutoff
+        critical_freq = [start_cutoff]
 
     if verbose:
         print(f"Critical Frequencies: {critical_freq}")
