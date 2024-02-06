@@ -105,6 +105,11 @@ int main(int argc, char *argv[])
     // Void pointer to the filter object
     void *filter = (void *)0;
 
+    // Print the fixed point configuration, print the size of all the filter types in bits
+    printf("filter_coeff_t: %lu bits\n", sizeof(filter_coeff_t) * 8);
+    printf("filter_data_t: %lu bits\n", sizeof(filter_data_t) * 8);
+    printf("filter_accum_t: %lu bits\n", sizeof(filter_accum_t) * 8);
+
     // Create the filter object using dynamic memory and based on the filter type
     if (!strcmp(argv[6], "sma")) {
         filter = (void *)malloc(sizeof(sma_filter_t) * num_columns);

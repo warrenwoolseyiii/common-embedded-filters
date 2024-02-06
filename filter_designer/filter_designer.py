@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import butter, freqz, sosfreqz, sosfilt, lfilter, firwin, firwin2
+from scipy.signal import butter, cheby1, freqz, sosfreqz, sosfilt, lfilter, firwin, firwin2
 import argparse
 import os
 
@@ -432,7 +432,19 @@ if filter_type == 'iir-biquad' or filter_type == 'iir':
         sos = butter(N=filter_order, Wn=critical_freq, btype=filter_mode, output='sos', fs=sampling_rate)
         b, a = butter(N=filter_order, Wn=critical_freq, btype=filter_mode, output='ba', fs=sampling_rate)
     elif iir_filter_type == 'cheby1':
-        raise ValueError("cheby1 is not supported")
+        if filter_mode == 'lowpass' or filter_mode == 'highpass':
+            # For high and low pass, cheby1 expects a single critical frequency
+            critical_freq = start_cutoff_normalized
+        else:
+            # For band pass and band stop, cheby1 expects a tuple of critical frequencies
+            critical_freq = [start_cutoff_normalized, stop_cutoff_normalized]
+        
+        if verbose:
+            print(f"Critical Frequencies: {critical_freq}")
+        
+        # Generate the filter coefficients
+        sos = cheby1(N=filter_order, rp=ripple, Wn=critical_freq, btype=filter_mode, output='sos')
+        b, a = cheby1(N=filter_order, rp=ripple, Wn=critical_freq, btype=filter_mode, output='ba')
     elif iir_filter_type == 'cheby2':
         raise ValueError("cheby2 is not supported")
     elif iir_filter_type == 'ellip':
