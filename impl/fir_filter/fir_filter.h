@@ -19,44 +19,52 @@
 //LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
-#ifndef FIXED_POINT_H_
-#define FIXED_POINT_H_
+#ifndef FIR_FILTER_H_
+#define FIR_FILTER_H_
 
 // Protect against C++ compilers
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-#include <stdint.h>
-#include <stddef.h>
+#include "../fixed_point.h"
 
-#ifndef ENABLE_FLOATING_POINT_MATH
-#define ENABLE_FLOATING_POINT_MATH 0
-#endif /* ENABLE_FLOATING_POINT_MATH */
+#define FIR_FILTER_ERROR_OK             0
+#define FIR_FILTER_ERROR_INVALID_PARAM  -1
+#define FIR_FILTER_ERROR_INVALID_OUTPUT -2
 
-// Define filter data types based on floating point enabled or not
-#if ENABLE_FLOATING_POINT_MATH
-typedef double     filter_coeff_t;
-typedef float     filter_data_t;
-typedef double     filter_accum_t;
-#else
-typedef long   filter_coeff_t;
-typedef int   filter_data_t;
-typedef long   filter_accum_t;
-#endif /* ENABLE_FLOATING_POINT_MATH */
+/**
+  * @brief IIR filter structure
+  */
+typedef struct
+{
+    unsigned int    num_coeffs;
+    unsigned int    count;
+    filter_coeff_t *b_coeffs;
+    filter_accum_t *prev_inputs;
+} fir_filter_t;
 
-#if ENABLE_FLOATING_POINT_MATH
-#define TO_FIXED_POINT(x)   (x)
-#define FROM_FIXED_POINT(x) (x)
-#else
-#define FIXED_POINT_FRACTIONAL_BITS ((sizeof(filter_data_t) * 8) - 1)
-#define FIXED_POINT_SCALING_FACTOR  (1UL << FIXED_POINT_FRACTIONAL_BITS)
-#define TO_FIXED_POINT(x)   ((x) * FIXED_POINT_SCALING_FACTOR)
-#define FROM_FIXED_POINT(x) ((x) >> FIXED_POINT_FRACTIONAL_BITS)
-#endif /* ENABLE_FLOATING_POINT_MATH */
+/**
+  * @brief Initialize the filter
+  * @param filter Pointer to the filter
+  * @param b_coeffs Pointer to the numerator coefficients
+  * @param prev_inputs Pointer to the previous inputs
+  * @param num_coeffs The number of coefficients that need to be applied
+  * @return FIR_FILTER_ERROR_OK on success, negative on error
+  */
+int fir_filter_init(fir_filter_t *filter, filter_coeff_t *b_coeffs, filter_accum_t *prev_inputs, unsigned int num_coeffs);
+
+/**
+  * @brief Run an FIR filter on the input value
+  * @param filter Pointer to the filter
+  * @param input Input value
+  * @param output Pointer to the output value
+  * @return FIR_FILTER_ERROR_OK on success, negative on error
+  */
+int fir_filter_run(fir_filter_t *filter, filter_data_t input, filter_data_t *output);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* FIXED_POINT_H_ */
+#endif /* FIR_FILTER_H_ */

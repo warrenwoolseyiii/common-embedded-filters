@@ -34,62 +34,66 @@ extern "C" {
 #define IIR_FILTER_ERROR_INVALID_OUTPUT -2
 
 /**
- * @brief IIR filter structure
- */
-typedef struct {
-    unsigned int filter_order;
-    unsigned int count;
+  * @brief IIR filter structure
+  */
+typedef struct
+{
+    unsigned int    num_coeffs;
+    unsigned int    count;
     filter_coeff_t *b_coeffs;
     filter_coeff_t *a_coeffs;
     filter_accum_t *prev_inputs;
     filter_accum_t *prev_outputs;
 } iir_filter_t;
 
-// TODO: Add biquad filter support
-typedef struct {
-    unsigned int filter_order;
+/**
+  * @brief IIR biquad filter structure
+  */
+typedef struct
+{
+    unsigned int num_coeffs;
     unsigned int count;
-    filter_coeff_t (*sos_coeffs)[6];
-    filter_accum_t *delay_elements;
+    filter_coeff_t(*sos_coeffs)[6];
+    filter_accum_t(*delay_elements);
 } iir_biquad_filter_t;
 
 /**
- * @brief Initialize the filter
- * @param filter Pointer to the filter
- * @param b_coeffs Pointer to the numerator coefficients
- * @param a_coeffs Pointer to the denominator coefficients
- * @param prev_inputs Pointer to the previous inputs
- * @param prev_outputs Pointer to the previous outputs
- * @param filter_order Order of the filter
- * @return IIR_FILTER_ERROR_OK on success, negative on error
- */
-int iir_filter_init(iir_filter_t *filter, filter_coeff_t *b_coeffs, filter_coeff_t *a_coeffs, filter_accum_t *prev_inputs, filter_accum_t *prev_outputs, unsigned int filter_order);
+  * @brief Initialize the filter
+  * @param filter Pointer to the filter
+  * @param b_coeffs Pointer to the numerator coefficients
+  * @param a_coeffs Pointer to the denominator coefficients
+  * @param prev_inputs Pointer to the previous inputs
+  * @param prev_outputs Pointer to the previous outputs
+  * @param num_coeffs The number of coefficients that need to be applied
+  * @return IIR_FILTER_ERROR_OK on success, negative on error
+  */
+int iir_filter_init(iir_filter_t *filter, filter_coeff_t *b_coeffs, filter_coeff_t *a_coeffs, filter_accum_t *prev_inputs, filter_accum_t *prev_outputs, unsigned int num_coeffs);
 
 /**
- * @brief Run a high pass iir filter on the input
- * @param filter Pointer to the filter
- * @param input Input value
- * @param output Pointer to the output value
- * @return IIR_FILTER_ERROR_OK on success, negative on error
- */
+  * @brief Run an IIR filter on the input
+  * @param filter Pointer to the filter
+  * @param input Input value
+  * @param output Pointer to the output value
+  * @return IIR_FILTER_ERROR_OK on success, negative on error
+  */
 int iir_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *output);
 
 /**
- * @brief Initialize the biquad filter
- * @param filter Pointer to the filter
- * @param sos_coeffs Pointer to the second order section coefficients
- * @param delay_elements Pointer to the previous inputs
- * @param filter_order Order of the filter
-*/
-int iir_biquad_filter_init(iir_biquad_filter_t *filter, filter_coeff_t (*sos_coeffs)[6], filter_accum_t *delay_elements, unsigned int filter_order);
+  * @brief Initialize the biquad filter
+  * @param filter Pointer to the filter
+  * @param sos_coeffs Pointer to the second order section coefficients
+  * @param delay_elements Pointer to the previous inputs
+  * @param num_coeffs The number of coefficients that need to be applied
+  */
+int iir_biquad_filter_init(iir_biquad_filter_t *filter, filter_coeff_t (*sos_coeffs)[6], filter_accum_t *delay_elements, unsigned int num_coeffs);
 
 /**
- * @brief Run a biquad filter on the input
- * @param filter Pointer to the filter
- * @param input Input value
- * @param output Pointer to the output value
- * @return IIR_FILTER_ERROR_OK on success, negative on error
- */
+  * @brief Run a biquad filter on the input
+  * @param filter Pointer to the filter
+  * @param input Input value
+  * @param output Pointer to the output value
+  * @return IIR_FILTER_ERROR_OK on success, negative on error
+  */
 int iir_biquad_filter_run(iir_biquad_filter_t *filter, filter_data_t input, filter_data_t *output);
 
 #ifdef __cplusplus

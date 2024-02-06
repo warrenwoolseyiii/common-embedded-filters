@@ -55,3 +55,8 @@ dkms.conf
 .vscode/
 *.DS_Store
 *.filtered
+example_data_sets/fir_filtered_signal.log
+example_data_sets/fir_test_signal.log
+example_data_sets/iir_filtered_signal.log
+example_data_sets/iir_test_signal.log
+filter_designer/*.cfg
