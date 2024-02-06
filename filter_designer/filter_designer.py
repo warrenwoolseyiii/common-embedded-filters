@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import iirfilter, freqz, sosfreqz, sosfilt, lfilter, firwin, remez, firls, firwin2
+from scipy.signal import butter, freqz, sosfreqz, sosfilt, lfilter, firwin, firwin2
 import argparse
 import os
 
@@ -116,7 +116,7 @@ def write_iir_config(num_terms, filter_order, start_freq, stop_freq, fname):
 @param b - The numerator coefficients
 @param a - The denominator coefficients
 @return None"""
-def plot_iir_filter_response(sos, b, a):
+def plot_iir_filter_response(sos, b, a, sampling_rate):
     # Visualize filter characteristics
     w_sos, h_sos = sosfreqz(sos=sos, worN=8000, fs=sampling_rate)
     w_ba, h_ba = freqz(b, a, worN=8000, fs=sampling_rate)
@@ -134,7 +134,7 @@ def plot_iir_filter_response(sos, b, a):
 """plot_fir_filter_response - Plot the frequency response of the filter
 @param h - The filter coefficients
 @return None"""
-def plot_fir_filter_response(h):
+def plot_fir_filter_response(h, sampling_rate):
     w, h = freqz(h, worN=8000, fs=sampling_rate)
     h_dB = 20 * np.log10(np.abs(h) + np.finfo(float).eps)  # Add a small epsilon to avoid log(0)
     plt.figure()
@@ -413,17 +413,35 @@ if filter_mode in ['bandpass', 'bandstop'] and not stop_cutoff:
 
 # Generate filter coefficients for an IIR filter
 if filter_type == 'iir-biquad' or filter_type == 'iir':
-    # Create the cricitical frequencies
-    if stop_cutoff:
-        critical_freq = [start_cutoff_normalized, stop_cutoff_normalized]
+
+    # Handle the different IIR filter design algorithms
+    if iir_filter_type == 'butter':
+        if filter_mode == 'lowpass' or filter_mode == 'highpass':
+            # For high and low pass, butter expects a single critical frequency
+            critical_freq = start_cutoff
+        else:
+            # For band pass and band stop, butter expects a tuple of critical frequencies
+            critical_freq = []
+            for i in range(int(stop_cutoff - start_cutoff) + 1):
+                critical_freq.append(start_cutoff + i)
+        
+        if verbose:
+            print(f"Critical Frequencies: {critical_freq}")
+        
+        # Generate the filter coefficients
+        sos = butter(N=filter_order, Wn=critical_freq, btype=filter_mode, output='sos', fs=sampling_rate)
+        b, a = butter(N=filter_order, Wn=critical_freq, btype=filter_mode, output='ba', fs=sampling_rate)
+    elif iir_filter_type == 'cheby1':
+        raise ValueError("cheby1 is not supported")
+    elif iir_filter_type == 'cheby2':
+        raise ValueError("cheby2 is not supported")
+    elif iir_filter_type == 'ellip':
+        raise ValueError("ellip is not supported")
+    elif iir_filter_type == 'bessel':
+        raise ValueError("bessel is not supported")
     else:
-        critical_freq = start_cutoff_normalized
+        raise ValueError("Unknown IIR filter design algorithm")
 
-    if verbose:
-        print(f"Critical Frequencies: {critical_freq}")
-
-    sos = iirfilter(N=filter_order, Wn=critical_freq, btype=filter_mode, ftype=iir_filter_type, output='sos', fs=sampling_rate, rp=ripple, rs=attenuition)
-    b, a = iirfilter(N=filter_order, Wn=critical_freq, btype=filter_mode, ftype=iir_filter_type, output='ba', fs=sampling_rate, rp=ripple, rs=attenuition)
     if verbose:
         print(f"SOS: {sos}")
         print(f"B: {b}")
@@ -435,7 +453,7 @@ if filter_type == 'iir-biquad' or filter_type == 'iir':
 
 
     # Plot the frequency response of the filter
-    plot_iir_filter_response(sos, b, a)
+    plot_iir_filter_response(sos, b, a, sampling_rate)
 
     # Synthesize a filter input signal
     iir_signal = 'example_data_sets/iir_test_signal.log'
@@ -516,7 +534,7 @@ elif filter_type == 'fir' or filter_type == 'fir-custom':
     write_fir_config(filter_order, start_cutoff, stop_cutoff, 'impl/fir_filter/fir_config.h')
 
     # Plot the frequency response of the filter
-    plot_fir_filter_response(h)
+    plot_fir_filter_response(h, sampling_rate)
 
     # Synthesize a filter input signal
     fir_signal = 'example_data_sets/fir_test_signal.log'
