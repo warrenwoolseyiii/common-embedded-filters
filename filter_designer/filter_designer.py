@@ -153,28 +153,39 @@ def plot_fir_filter_response(h):
 @param fname - The file name to write to
 @return t - The time series
 @return sinusoid - The sinusoid"""
-def synthesize_filter_input(filter_mode, start_cutoff, stop_cutoff, sampling_rate, fname):
+def synthesize_filter_input(filter_mode, frequencies, sampling_rate, fname):
     # Generate and filter a test signal, we need a frequency firmly in the stop band and one in the pass band
     if filter_mode == 'lowpass':
-        freq_in_pass_band = np.random.uniform(0, start_cutoff)
-        freq_in_stop_band = np.random.uniform(start_cutoff, sampling_rate / 2)
+        freq_in_pass_band = np.random.uniform(0, frequencies(0))
+        freq_in_stop_band = np.random.uniform(frequencies(0), sampling_rate / 2)
     elif filter_mode == 'highpass':
-        freq_in_pass_band = np.random.uniform(start_cutoff, sampling_rate / 2)
-        freq_in_stop_band = np.random.uniform(0, start_cutoff)
+        freq_in_pass_band = np.random.uniform(frequencies(0), sampling_rate / 2)
+        freq_in_stop_band = np.random.uniform(0, frequencies(0))
     elif filter_mode == 'bandpass':
         # Find the bigger frequency range and put the stop band in the middle
-        if nyquist - stop_cutoff > start_cutoff:
-            freq_in_stop_band = np.random.uniform(stop_cutoff, nyquist)
+        if nyquist - frequencies(1) > frequencies(0):
+            freq_in_stop_band = np.random.uniform(frequencies(1), nyquist)
         else:
-            freq_in_stop_band = np.random.uniform(0, start_cutoff)
-        freq_in_pass_band = np.random.uniform(start_cutoff, stop_cutoff)
+            freq_in_stop_band = np.random.uniform(0, frequencies(0))
+        freq_in_pass_band = np.random.uniform(frequencies(0), frequencies(1))
     elif filter_mode == 'bandstop':
         # Find the bigger frequency range and put the pass band in the middle
-        if nyquist - stop_cutoff > start_cutoff:
-            freq_in_pass_band = np.random.uniform(stop_cutoff, nyquist)
+        if nyquist - frequencies(1) > frequencies(0):
+            freq_in_pass_band = np.random.uniform(frequencies(1), nyquist)
         else:
-            freq_in_pass_band = np.random.uniform(0, start_cutoff)
-        freq_in_stop_band = np.random.uniform(start_cutoff, stop_cutoff)
+            freq_in_pass_band = np.random.uniform(0, frequencies(0))
+        freq_in_stop_band = np.random.uniform(frequencies(0), frequencies(1))
+    elif filter_mode == 'custom':
+        # Choose any frequency in the frequency range that is not the 0th or last frequency
+        freq_in_pass_band = np.random.choice(frequencies[1:-1])
+        # Choose any frequency in between 0 and the sampling rate that is not in the frequency range
+        while True:
+            freq_in_stop_band = np.random.uniform(0, sampling_rate / 2)
+            if freq_in_stop_band in frequencies or freq_in_stop_band == 0 or freq_in_stop_band == sampling_rate / 2:
+                continue
+            else:
+                break
+
     if verbose:
         print(f"Frequency in Stop Band: {freq_in_stop_band}")
         print(f"Frequency in Pass Band: {freq_in_pass_band}")
@@ -280,8 +291,8 @@ def fft_filter_compare(sinusoid, c_filt, py_filt, sampling_rate):
 parser = argparse.ArgumentParser(description="Filter Designer")
 
 # Add the arguments
-parser.add_argument('-f', '--filter', type=str, default="", choices=['iir-biquad', 'iir', 'fir'], help="Filter type")
-parser.add_argument('-m', '--mode', type=str, default="", choices=['lowpass', 'highpass', 'bandpass', 'bandstop'], help="Filter mode")
+parser.add_argument('-f', '--filter', type=str, default="", choices=['iir-biquad', 'iir', 'fir', 'fir-custom'], help="Filter type")
+parser.add_argument('-m', '--mode', type=str, default="", choices=['lowpass', 'highpass', 'bandpass', 'bandstop', 'custom'], help="Filter mode")
 parser.add_argument('-o', '--order', type=int, default=0, help="Filter order")
 parser.add_argument('-s', '--sampling_rate', type=float, default=0, help="Sampling rate in Hz")
 parser.add_argument('-c', '--start_cutoff', type=float, default=0, help="Start cutoff frequency in Hz")
@@ -295,6 +306,7 @@ parser.add_argument('-d', '--debug', type=bool, default=False, help="Optional de
 parser.add_argument('-t', '--attenuition', type=float, default=0.1, help="Optional stopband attenuation for cheby1/2 and ellip filters")
 parser.add_argument('-e', '--config_file', type=str, default="", help="Optional configuration file to bypass the command line arguments")
 parser.add_argument('-l', '--roll_off', type=float, default=None, help="Optional roll off for the FIR filter")
+parser.add_argument('-fr', '--frequency_range', nargs='+', default=None, help="Optional frequency range for firwin2 filter design algorithm")
 
 # Parse the arguments
 args = parser.parse_args()
@@ -315,6 +327,7 @@ debug = args.debug
 attenuition = args.attenuition
 roll_off = args.roll_off
 config_file = args.config_file
+frequency_range = args.frequency_range
 if config_file:
     try:
         with open(config_file, 'r') as f:
@@ -357,6 +370,8 @@ if config_file:
                     attenuition = float(value)
                 elif key == 'roll_off':
                     roll_off = float(value)
+                elif key == 'frequency_range':
+                    frequency_range = list(map(float, value.split(',')))
                 config_success = True
     except Exception as e:
         print(f"Error reading from file: {e}")
@@ -421,7 +436,7 @@ if filter_type == 'iir-biquad' or filter_type == 'iir':
     # Synthesize a filter input signal
     iir_signal = 'example_data_sets/iir_test_signal.log'
     iir_out_signal = 'example_data_sets/iir_filtered_signal.log'
-    t, sinusoid = synthesize_filter_input(filter_mode, start_cutoff, stop_cutoff, sampling_rate, iir_signal)
+    t, sinusoid = synthesize_filter_input(filter_mode, [start_cutoff, stop_cutoff], sampling_rate, iir_signal)
 
     # Test the C filter implementation
     c_filter = "iir-biquad" if use_sos else "iir"
@@ -445,7 +460,7 @@ if filter_type == 'iir-biquad' or filter_type == 'iir':
     plt.ylabel('Amplitude')
     plt.title('Effectiveness of the Filter')
     plt.show()
-elif filter_type == 'fir':
+elif filter_type == 'fir' or filter_type == 'fir-custom':
     # Create the cricitical frequencies
     if stop_cutoff:
         critical_freq = [start_cutoff, stop_cutoff]
@@ -458,15 +473,25 @@ elif filter_type == 'fir':
     if fir_algorithm == 'firwin':
         h = firwin(numtaps=filter_order, cutoff=critical_freq, window=fir_window, width=roll_off, fs=sampling_rate, pass_zero=filter_mode)
     elif fir_algorithm == 'firwin2':
-        # TODO: Support all filter modes - firwin2 is made for custom non standard filters. Add a 
-        # custom filter mode to the command line arguments, the below code works but is just an example
-        # if filter_mode == 'lowpass':
-        #     arr = np.linspace(0, int(start_cutoff), int(start_cutoff + 1))
-        #     arr = np.concatenate((arr, [nyquist]))
-        #     gain = [1] * len(arr)
-        #     gain[-1] = 0
-        # h = firwin2(numtaps=filter_order, freq=arr , gain=gain, window=fir_window, fs=sampling_rate)
-        raise ValueError("firwin2 is not supported")
+        # Ensure that a frequency range is provided
+        if not frequency_range:
+            raise ValueError("firwin2 requires a frequency range")
+        
+        # Populate a full set of frequency ranges and gains, we assume if the frequency is in the range, it is a pass band
+        critical_freq = []
+        target_gain = []
+        for i in range(int(sampling_rate/2) + 1):
+            critical_freq.append(i)
+            if i in frequency_range and i != 0 and i != sampling_rate / 2:
+                target_gain.append(1)
+            else:
+                target_gain.append(0)
+        
+        # Generate the filter coefficients
+        h = firwin2(numtaps=filter_order, freq=critical_freq , gain=target_gain, window=fir_window, fs=sampling_rate)
+
+        # Reset this value to only the pass band frequencies for the test signal
+        critical_freq = frequency_range
     elif fir_algorithm == 'firls':
         # h = firls(numtaps=filter_order, freq=critical_freq, gain=[1, 0], fs=sampling_rate)
         raise ValueError("firls is not supported")
@@ -489,7 +514,7 @@ elif filter_type == 'fir':
     # Synthesize a filter input signal
     fir_signal = 'example_data_sets/fir_test_signal.log'
     fir_out_signal = 'example_data_sets/fir_filtered_signal.log'
-    t, sinusoid = synthesize_filter_input(filter_mode, start_cutoff, stop_cutoff, sampling_rate, fir_signal)
+    t, sinusoid = synthesize_filter_input(filter_mode, critical_freq, sampling_rate, fir_signal)
 
     # Test the C filter implementation
     c_args = f"./example_impl/filter_example -i {fir_signal} -o {fir_out_signal} -f fir -s {filter_mode}"
