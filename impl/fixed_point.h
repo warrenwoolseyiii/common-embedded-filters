@@ -40,9 +40,9 @@ typedef double     filter_coeff_t;
 typedef float     filter_data_t;
 typedef double     filter_accum_t;
 #else
-typedef long   filter_coeff_t;
+typedef long  filter_coeff_t;
 typedef int   filter_data_t;
-typedef long   filter_accum_t;
+typedef long  filter_accum_t;
 #endif /* ENABLE_FLOATING_POINT_MATH */
 
 #if ENABLE_FLOATING_POINT_MATH
