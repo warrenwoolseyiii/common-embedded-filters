@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import butter, cheby1, freqz, sosfreqz, sosfilt, lfilter, firwin, firwin2
+from scipy.signal import butter, cheby1, cheby2, freqz, sosfreqz, sosfilt, lfilter, firwin, firwin2, ellip
 import argparse
 import os
 
@@ -446,9 +446,33 @@ if filter_type == 'iir-biquad' or filter_type == 'iir':
         sos = cheby1(N=filter_order, rp=ripple, Wn=critical_freq, btype=filter_mode, output='sos')
         b, a = cheby1(N=filter_order, rp=ripple, Wn=critical_freq, btype=filter_mode, output='ba')
     elif iir_filter_type == 'cheby2':
-        raise ValueError("cheby2 is not supported")
+        if filter_mode == 'lowpass' or filter_mode == 'highpass':
+            # For high and low pass, cheby2 expects a single critical frequency
+            critical_freq = start_cutoff_normalized
+        else:
+            # For band pass and band stop, cheby2 expects a tuple of critical frequencies
+            critical_freq = [start_cutoff_normalized, stop_cutoff_normalized]
+        
+        if verbose:
+            print(f"Critical Frequencies: {critical_freq}")
+        
+        # Generate the filter coefficients
+        sos = cheby2(N=filter_order, rs=attenuition, Wn=critical_freq, btype=filter_mode, output='sos')
+        b, a = cheby2(N=filter_order, rs=attenuition, Wn=critical_freq, btype=filter_mode, output='ba')
     elif iir_filter_type == 'ellip':
-        raise ValueError("ellip is not supported")
+        if filter_mode == 'lowpass' or filter_mode == 'highpass':
+            # For high and low pass, ellip expects a single critical frequency
+            critical_freq = start_cutoff_normalized
+        else:
+            # For band pass and band stop, ellip expects a tuple of critical frequencies
+            critical_freq = [start_cutoff_normalized, stop_cutoff_normalized]
+        
+        if verbose:
+            print(f"Critical Frequencies: {critical_freq}")
+        
+        # Generate the filter coefficients
+        sos = ellip(N=filter_order, rp=ripple, rs=attenuition, Wn=critical_freq, btype=filter_mode, output='sos')
+        b, a = ellip(N=filter_order, rp=ripple, rs=attenuition, Wn=critical_freq, btype=filter_mode, output='ba')
     elif iir_filter_type == 'bessel':
         raise ValueError("bessel is not supported")
     else:
