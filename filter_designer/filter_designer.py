@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import butter, cheby1, cheby2, freqz, sosfreqz, sosfilt, lfilter, firwin, firwin2, ellip
+from scipy.signal import butter, cheby1, cheby2, freqz, sosfreqz, sosfilt, lfilter, firwin, firwin2, ellip, bessel
 import argparse
 import os
 
@@ -308,6 +308,7 @@ parser.add_argument('-e', '--config_file', type=str, default="", help="Optional 
 parser.add_argument('-l', '--roll_off', type=float, default=None, help="Optional roll off for the FIR filter")
 parser.add_argument('-fr', '--frequency_range', nargs='+', default=None, help="Optional frequency range for firwin2 filter design algorithm")
 parser.add_argument('-fg', '--frequency_gain', nargs='+', default=None, help="Optional frequency gain for firwin2 filter design algorithm")
+parser.add_argument('-n', '--normalization', type=str, default='phase', choices=['phase', 'delay', 'mag'], help="Optional normalization for the frequency response for a bessel iir filter")
 
 # Parse the arguments
 args = parser.parse_args()
@@ -330,6 +331,7 @@ roll_off = args.roll_off
 config_file = args.config_file
 frequency_range = args.frequency_range
 frequency_gain = args.frequency_gain
+norm = args.normalization
 if config_file:
     try:
         with open(config_file, 'r') as f:
@@ -376,6 +378,8 @@ if config_file:
                     frequency_range = list(map(float, value.split(',')))
                 elif key == 'frequency_gain':
                     frequency_gain = list(map(float, value.split(',')))
+                elif key == 'normalization':
+                    norm = value
                 config_success = True
     except Exception as e:
         print(f"Error reading from file: {e}")
@@ -474,7 +478,19 @@ if filter_type == 'iir-biquad' or filter_type == 'iir':
         sos = ellip(N=filter_order, rp=ripple, rs=attenuition, Wn=critical_freq, btype=filter_mode, output='sos')
         b, a = ellip(N=filter_order, rp=ripple, rs=attenuition, Wn=critical_freq, btype=filter_mode, output='ba')
     elif iir_filter_type == 'bessel':
-        raise ValueError("bessel is not supported")
+        if filter_mode == 'lowpass' or filter_mode == 'highpass':
+            # For high and low pass, bessel expects a single critical frequency
+            critical_freq = start_cutoff_normalized
+        else:
+            # For band pass and band stop, bessel expects a tuple of critical frequencies
+            critical_freq = [start_cutoff_normalized, stop_cutoff_normalized]
+        
+        if verbose:
+            print(f"Critical Frequencies: {critical_freq}")
+        
+        # Generate the filter coefficients
+        sos = bessel(N=filter_order, norm=norm, Wn=critical_freq, btype=filter_mode, output='sos')
+        b, a = bessel(N=filter_order, norm=norm, Wn=critical_freq, btype=filter_mode, output='ba')
     else:
         raise ValueError("Unknown IIR filter design algorithm")
 
