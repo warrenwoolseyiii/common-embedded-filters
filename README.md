@@ -22,12 +22,12 @@ An example call using a provided example dataset:
 ./cmd_line_imple/filter_example -i example_data_sets/low_freq_test.log -o output.log -f fir -s lowpass
 ```
 # Filter Designer
-Located in the `filter_designer` directory, the `filter_designer` tool is a python program that leverages the (scipy.signal)[https://docs.scipy.org/doc/scipy/reference/signal.html] library to generate coefficients for comman FIR, IIR, and IIR Biquad filters. This tool seemlessly integrates into the command line program to test and display the performance of your new filter instantly. 
+Located in the `filter_designer` directory, the `filter_designer` tool is a python program that leverages the [scipy.signal](https://docs.scipy.org/doc/scipy/reference/signal.html) library to generate coefficients for comman FIR, IIR, and IIR Biquad filters. This tool seemlessly integrates into the command line program to test and display the performance of your new filter instantly. 
 ## How it Works
 Provide the `filter_designer` tool with your required parameters (more on this below) and it will auto generate filter coefficients. It will then auto generate coefficient files, compile the command line program, and run it on a synthesized data set with a combination of frequencies in the pass band and in the stop band. You will be provided with a pre and post filtered signal, an FFT on the pre and post filtered signal, and plot of the filter's frequency response. You can choose floating or fixed point implementation of the filter by defining `ENABLE_FLOATING_POINT_MATH` at compile time. See `impl/fixed_point.h` for more information there.
 ## Using the Filter Designer Tool
 The `filter_designer` tool can be passed command line arguments directly, or you can provide a configuration file. Due to the large number of command line combinations, I highly recommend using a configuration file. There are example configuration files for the `filter_designer` tool in `filter_designer/example_configs`, below I will show you some example runs and output generated.
-1. Generate a 31'st order FIR high pass filter using fixed point implementation
+### Generate a 31'st order FIR high pass filter using fixed point implementation
 ```
 ./python3 ./filter_designer/filter_designer.py -e filter_designer/example_configs/fir_hpf.cfg
 ```
@@ -84,3 +84,23 @@ filter_accum_t: 64 bits
 Average time delta: 19.959999 ms
 Average sample rate: 50.100203 Hz
 ```
+The following plots will be generated displaying the filters performance:
+![example plot](documentation/hpf_example_plot.png)
+![example fft](documentation/hpf_example_fft.png)
+![example freq resp](documentation/hpf_example_freq_resp.png)
+
+The following files will be generated for the filter configuration and coefficients:
+`impl/fir_filter/fir_coefficients.c`
+`impl/fir_filter/fir_config.h`
+
+The following logs will be generated with synthesized input and direct output of the command line program:
+`example_data_sets/fir_test_signal.log`
+`example_data_sets/fir_filtered_signal.log`
+# Implementing in Your Embedded System Project
+I highly recommend using the `filter_design` tool to auto generate coefficient files, and coefficients for your filter. However you are free to make your own coefficients and coefficient structures as you like. You can always use the tool to auto generate the files and then replace with your own coefficients.
+
+To choose between floating point and fixed point math, see `impl/fixed_point.h`.
+
+To integrate into your project, simple drop the entire `impl` directory into your project, or reference it from your project directly. To create a filter you will have to initialize a filter object struct, each of which are defined in the filter implementation sub directories. See `cmd_line_impl` for example initializations of the struct objects.
+
+Thats it! Hopefully you find this project useful, please feel free to log any issues, bugs, or feature requests. Or make your desired modifications and open a PR.
