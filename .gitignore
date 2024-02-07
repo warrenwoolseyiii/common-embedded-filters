@@ -60,3 +60,7 @@ example_data_sets/fir_test_signal.log
 example_data_sets/iir_filtered_signal.log
 example_data_sets/iir_test_signal.log
 filter_designer/*.cfg
+impl/iir_filter/iir_coefficients.c
+impl/iir_filter/iir_config.h
+impl/fir_filter/fir_coefficients.c
+impl/fir_filter/fir_config.h
