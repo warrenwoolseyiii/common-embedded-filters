@@ -212,7 +212,7 @@ def synthesize_filter_input(filter_mode, frequencies, sampling_rate, fname):
 def test_c_filter_impl(c_args, fout):    
     try:
         # Clean and compile the application, change the working directory to example_impl
-        os.chdir('example_impl')
+        os.chdir('cmd_line_impl')
         os.system("make clean")
         os.system("make")
         os.chdir('..')
@@ -514,7 +514,7 @@ if filter_type == 'iir-biquad' or filter_type == 'iir':
 
     # Test the C filter implementation
     c_filter = "iir-biquad" if use_sos else "iir"
-    c_args = f"./example_impl/filter_example -i {iir_signal} -o {iir_out_signal} -f {c_filter} -s {filter_mode}"
+    c_args = f"./cmd_line_impl/filter_example -i {iir_signal} -o {iir_out_signal} -f {c_filter} -s {filter_mode}"
     filtered_signal = test_c_filter_impl(c_args, iir_out_signal)
 
     # Test the python filter implementation using the same coefficients
@@ -594,7 +594,7 @@ elif filter_type == 'fir' or filter_type == 'fir-custom':
     t, sinusoid = synthesize_filter_input(filter_mode, critical_freq, sampling_rate, fir_signal)
 
     # Test the C filter implementation
-    c_args = f"./example_impl/filter_example -i {fir_signal} -o {fir_out_signal} -f fir -s {filter_mode}"
+    c_args = f"./cmd_line_impl/filter_example -i {fir_signal} -o {fir_out_signal} -f fir -s {filter_mode}"
     filtered_signal = test_c_filter_impl(c_args, fir_out_signal)
 
     # Test the python filter implementation using the same coefficients

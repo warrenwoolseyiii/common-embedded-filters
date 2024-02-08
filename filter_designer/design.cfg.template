@@ -1,0 +1,34 @@
+# Filter type, this is the style of filter to implement
+filter=[iir,iir-biquad,fir,fir-custom]
+# Filter mode, this is the type of filter to implement
+mode=[lowpass,highpass,bandpass,bandstop,custom]
+# Filter order, number of filter taps to have
+order=[int]
+# Sampling rate for the filter data, measured in Hz
+sampling_rate=[int]
+# Cutoff frequency or the start cutoff frequency, required no matter what
+start_cutoff=[float]
+# Cutoff frequency for the stop, required for bandpass and bandstop filters. Must be larger than start_cutoff
+stop_cutoff=[float]
+# Ripple gain, required for ellip, and cheby1 / 2 iir filters
+ripple=[float]
+# Verbose option, print debugging and informational output to the terminal
+verbose=[bool]
+# iir filter design algorthim
+iir_filter_type=[butter,cheby1,cheby2,elli,bessel]
+# Windowing option for fir filter design
+window=[hamming,hann,blackman,bartlett,boxcar]
+# fir filter design algorithm
+fir_algorithm=[firwin,firwin2,firls,remez]
+# Allow debugging output in the way of python filter comparisons
+debug=[bool]
+# Attenuation in the stopband for cheby1 / 2, and ellip iir filters
+attenuation=[float]
+# Rolloff parameter for fir filter design
+rolloff=[float]
+# Range of frequencies for a custom fir filter, this is the frequencies accepted in the pass band
+frequency_range=[float,float,float,...]
+# Frequency gain, optional gains for each of the frequencies in the passband for acustom fir filter
+frequency_gain=[float,float,float,...]
+# Normalization parameter for bessel iir filters
+normalization=[phase,delay,mag]
