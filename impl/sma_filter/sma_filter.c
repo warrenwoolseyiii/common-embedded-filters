@@ -44,3 +44,17 @@ int sma_filter_run(sma_filter_t *filter, filter_data_t input, filter_data_t *out
 
     return (filter->count == filter->size) ? SMA_FILTER_ERROR_OK : SMA_FILTER_ERROR_INVALID_OUTPUT;
 }
+
+int sma_filter_reset(sma_filter_t *filter)
+{
+    if (!filter) {
+        return SMA_FILTER_ERROR_INVALID_PARAM;
+    }
+
+    filter->index = 0;
+    filter->sum = 0;
+    filter->count = 0;
+    memset(filter->data, 0, filter->size * sizeof(filter_data_t));
+
+    return SMA_FILTER_ERROR_OK;
+}
