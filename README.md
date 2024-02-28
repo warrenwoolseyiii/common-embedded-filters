@@ -96,6 +96,18 @@ The following files will be generated for the filter configuration and coefficie
 The following logs will be generated with synthesized input and direct output of the command line program:
 `example_data_sets/fir_test_signal.log`
 `example_data_sets/fir_filtered_signal.log`
+# Filter Analysis Tools
+Located in the `filter_analysis` directory, there are two tools to help you analyze raw data and filter logs.
+## fft.py
+Simply call this python script to run an FFT on your pre and post filtered logs. It will generate a multi axis comparison plot of the frequencies present in your pre and post filtered signals.
+```
+python3 ./filter_analysis/fft.p log1.log log2.log
+```
+## plotter.py
+Simply call this python script to plot the time domain signals of your pre and post filtered logs.
+```
+python3 ./filter_analysis/plotter.py log1.log log2.log
+```
 # Implementing in Your Embedded System Project
 I highly recommend using the `filter_design` tool to auto generate coefficient files, and coefficients for your filter. However you are free to make your own coefficients and coefficient structures as you like. You can always use the tool to auto generate the files and then replace with your own coefficients.
 

@@ -63,6 +63,13 @@ int sma_filter_init(sma_filter_t *filter, filter_data_t *data, unsigned int size
   */
 int sma_filter_run(sma_filter_t *filter, filter_data_t input, filter_data_t *output);
 
+/**
+  * @brief Reset the filter
+  * @param filter Pointer to the filter
+  * @return SMA_FILTER_ERROR_OK if success, otherwise an error code
+  */
+int sma_filter_reset(sma_filter_t *filter);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
