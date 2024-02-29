@@ -1,6 +1,6 @@
 # Compiler and compiler flags
 CC = gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -ffixed-point
 
 # Executable name
 TARGET = filter_example

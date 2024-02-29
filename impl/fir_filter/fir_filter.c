@@ -23,10 +23,10 @@ int fir_filter_run(fir_filter_t *filter, filter_data_t input, filter_data_t *out
     }
 
     filter_accum_t in = (filter_accum_t)input;
-    filter_accum_t new_output = FROM_FIXED_POINT(filter->b_coeffs[0] * in);
+    filter_accum_t new_output = (filter->b_coeffs[0] * in);
     for (int i = 1; i < filter->num_coeffs; i++)
     {
-        new_output += FROM_FIXED_POINT(filter->b_coeffs[i] * filter->prev_inputs[i - 1]);
+        new_output += (filter->b_coeffs[i] * filter->prev_inputs[i - 1]);
     }
 
     // Shift the buffer contents

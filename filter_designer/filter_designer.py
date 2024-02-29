@@ -17,7 +17,7 @@ def write_fir_coeffs(h, fname):
             f.write("#include \"fir_config.h\"\n")
             f.write("filter_coeff_t _fir_b_coeffs[FIR_NUM_COEFFS] = {\n")
             for i in range(len(h)):
-                f.write(f"\tTO_FIXED_POINT({h[i]}),\n")
+                f.write(f"\t(filter_coeff_t)({h[i]}),\n")
             f.write("};\n")
     except Exception as e:
         print(f"Error writing to file: {e}")
@@ -38,7 +38,7 @@ def write_fir_config(filter_order, start_freq, stop_freq, fname):
             f.write("// See the README for more information\n")
             f.write("#ifndef FIR_CONFIG_H_\n")
             f.write("#define FIR_CONFIG_H_\n")
-            f.write("#include \"../fixed_point.h\"\n")
+            f.write("#include \"../filter_types.h\"\n")
             f.write(f"#define FIR_NUM_COEFFS {filter_order}\n")
             f.write(f"#define FIR_FILTER_ORDER {filter_order}\n")
             f.write(f"#define FIR_START_FREQ {start_freq}\n")
@@ -63,17 +63,17 @@ def write_iir_coeffs(sos, b, a, fname):
             f.write("#include \"iir_config.h\"\n")
             f.write("filter_coeff_t _iir_b_coeffs[IIR_NUM_COEFFS] = {\n")
             for i in range(len(b)):
-                f.write(f"\tTO_FIXED_POINT({b[i]}),\n")
+                f.write(f"\t(filter_coeff_t)({b[i]}),\n")
             f.write("};\n")
             f.write("filter_coeff_t _iir_a_coeffs[IIR_NUM_COEFFS] = {\n")
             for i in range(len(a)):
-                f.write(f"\tTO_FIXED_POINT({a[i]}),\n")
+                f.write(f"\t(filter_coeff_t)({a[i]}),\n")
             f.write("};\n")
             f.write("filter_coeff_t _iir_sos_coeffs[IIR_BIQUAD_NUM_TERMS][6] = {\n")
             for i in range(len(sos)):
                 f.write("{")
                 for j in range(len(sos[i])):
-                    f.write(f"TO_FIXED_POINT({sos[i][j]}),")
+                    f.write(f"(filter_coeff_t)({sos[i][j]}),")
                 f.write("},\n")
             f.write("};\n")
     except Exception as e:
@@ -98,7 +98,7 @@ def write_iir_config(num_terms, filter_order, start_freq, stop_freq, fname):
             f.write("// See the README for more information\n")
             f.write("#ifndef IIR_CONFIG_H_\n")
             f.write("#define IIR_CONFIG_H_\n")
-            f.write("#include \"../fixed_point.h\"\n")
+            f.write("#include \"../filter_types.h\"\n")
             f.write(f"#define IIR_BIQUAD_NUM_TERMS {num_terms}\n")
             f.write(f"#define IIR_NUM_COEFFS {num_coeffs}\n")
             f.write(f"#define IIR_FILTER_ORDER {filter_order}\n")
