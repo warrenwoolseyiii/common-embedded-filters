@@ -33,7 +33,6 @@ typedef double        filter_coeff_t;
 typedef float         filter_data_t;
 typedef double        filter_accum_t;
 #else
-#include <stdfix.h>
 typedef long _Accum   filter_coeff_t;
 typedef _Accum        filter_data_t;
 typedef long _Accum   filter_accum_t;
