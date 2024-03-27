@@ -27,7 +27,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include "../fixed_point.h"
+#include "../filter_types.h"
 
 #define SMA_FILTER_ERROR_OK             0
 #define SMA_FILTER_ERROR_INVALID_PARAM  -1

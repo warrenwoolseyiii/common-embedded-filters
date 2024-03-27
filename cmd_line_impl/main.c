@@ -3,7 +3,7 @@
 #include "../impl/iir_filter/iir_config.h"
 #include "../impl/fir_filter/fir_filter.h"
 #include "../impl/fir_filter/fir_config.h"
-#include "../impl/fixed_point.h"
+#include "../impl/filter_types.h"
 
 #include <stdio.h>
 #include <stdarg.h>

@@ -26,10 +26,10 @@ int iir_filter_run(iir_filter_t *filter, filter_data_t input, filter_data_t *out
     }
 
     filter_accum_t in = (filter_accum_t)input;
-    filter_accum_t new_output = FROM_FIXED_POINT(filter->b_coeffs[0] * in);
+    filter_accum_t new_output = (filter->b_coeffs[0] * in);
     for (int i = 1; i <= filter->num_coeffs; i++)
     {
-        new_output += FROM_FIXED_POINT(filter->b_coeffs[i] * filter->prev_inputs[i - 1]) - FROM_FIXED_POINT(filter->a_coeffs[i] * filter->prev_outputs[i - 1]);
+        new_output += (filter->b_coeffs[i] * filter->prev_inputs[i - 1]) - (filter->a_coeffs[i] * filter->prev_outputs[i - 1]);
     }
 
     // Shift the buffer contents
@@ -83,11 +83,11 @@ int iir_biquad_filter_run(iir_biquad_filter_t *filter, filter_data_t input, filt
     {
         // This is the filter equation
         // output = b0 * input + b1 * delay0 + b2 * delay1 - a1 * delay0 - a2 * delay1
-        filter_accum_t w0 = FROM_FIXED_POINT(filter->sos_coeffs[i][0] * new_output) +
-                            FROM_FIXED_POINT(filter->sos_coeffs[i][1] * filter->delay_elements[delay_index]) +
-                            FROM_FIXED_POINT(filter->sos_coeffs[i][2] * filter->delay_elements[delay_index + 1]);
-        filter_accum_t w1 = FROM_FIXED_POINT(filter->sos_coeffs[i][4] * filter->delay_elements[delay_index + 2]) +
-                            FROM_FIXED_POINT(filter->sos_coeffs[i][5] * filter->delay_elements[delay_index + 3]);
+        filter_accum_t w0 = (filter->sos_coeffs[i][0] * new_output) +
+                            (filter->sos_coeffs[i][1] * filter->delay_elements[delay_index]) +
+                            (filter->sos_coeffs[i][2] * filter->delay_elements[delay_index + 1]);
+        filter_accum_t w1 = (filter->sos_coeffs[i][4] * filter->delay_elements[delay_index + 2]) +
+                            (filter->sos_coeffs[i][5] * filter->delay_elements[delay_index + 3]);
 
         // Move the delay terms up
         filter->delay_elements[delay_index + 1] = filter->delay_elements[delay_index];
